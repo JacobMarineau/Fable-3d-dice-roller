@@ -10,7 +10,7 @@ let createNew<'T> (ctor: obj) (args: obj list) : 'T =
 
 // Create Three.js objects
 let scene: obj = createNew THREE?Scene []
-let camera: obj = createNew THREE?PerspectiveCamera [75.0; window.innerWidth / window.innerHeight; 0.1; 1000.0]
+let camera: obj = createNew THREE?PerspectiveCamera [100.0; window.innerWidth / window.innerHeight; 0.1; 500.0]
 let renderer: obj = createNew THREE?WebGLRenderer []
 
 renderer?setSize(window.innerWidth, window.innerHeight)
