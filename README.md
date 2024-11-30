@@ -18,6 +18,7 @@ A 3D dice roller built with **F#**, **Fable**, and **Three.js**. This project de
 ### Prerequisites
 
 Ensure you have the following installed:
+
 - [Node.js](https://nodejs.org/) (with `npm`)
 - [.NET SDK](https://dotnet.microsoft.com/) (6.0 or later)
 
@@ -43,12 +44,13 @@ npm start
 Open your browser and navigate to http://localhost:8080/ to see the app in action.
 
 ## Usage 🛠️
+
 Click the Roll Dice button to roll the dice.
 The die will spin randomly and land on a face that matches the rolled number.
 The result of the roll is displayed on the screen.
 Project Structure 📂
 
-````
+```
 Fable-3d-dice-roller/
 │
 ├── public/
@@ -59,12 +61,12 @@ Fable-3d-dice-roller/
 ├── src/
 │   ├── App.fs         # Main F# code for the app
 │   ├── App.fsproj     # Fable project configuration
-│   
+│
 │
 ├── package.json       # NPM configuration
 ├── webpack.config.js  # Webpack configuration
 └── README.md          # Project documentation (you are here!)
-````
+```
 
 ## Technologies Used 🧰
 
@@ -77,7 +79,7 @@ Webpack: Module bundler for modern JavaScript applications.
 Dice Textures: Each face of the dice is represented by a PNG texture stored in the textures folder.
 3D Scene: The app uses Three.js to render a 3D scene, including the dice, lights, and camera.
 Roll Logic: A random number generator determines the rolled face, and the dice rotates smoothly to land on the correct face.
-Additional Notes: You will need to create your own textures for a better die since mine were wiped up in five minutes with Gimp.
+Additional Notes: You will need to create your own textures for a better die since mine were whipped up in five minutes with Gimp.
 
 ## Future Improvements 🚀
 
@@ -86,6 +88,7 @@ Enhance animations with physics-based rolls.
 Create multiplayer support for board games.
 
 ## License 📄
+
 This project is open-source and available under the MIT License. Feel free to use, modify, and share it!
 
 ## Acknowledgments 🙌
