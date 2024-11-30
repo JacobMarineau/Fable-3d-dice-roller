@@ -1,41 +1,97 @@
-# Fable Minimal App
+# Fable 3D Dice Roller 🎲
 
-This is a small Fable app project so you can easily get started and add your own code progressively. For more comprehensive templates [check this page](https://fable.io/docs/2-steps/your-first-fable-project.html).
+A 3D dice roller built with **F#**, **Fable**, and **Three.js**. This project demonstrates how to create interactive 3D graphics in the browser using Fable to compile F# to JavaScript.
 
-## Requirements
+---
 
-* [dotnet SDK](https://www.microsoft.com/net/download/core) 5.0 or higher
-* [node.js](https://nodejs.org)
-* An F# editor like Visual Studio, Visual Studio Code with [Ionide](http://ionide.io/) or [JetBrains Rider](https://www.jetbrains.com/rider/)
+## Features ✨
 
-## Building and running the app
+- 🎲 **Realistic 3D dice rolling** with randomized rolls.
+- 🖼️ **Textured dice faces** for an authentic look.
+- 📸 Smooth animations and transitions.
+- 🔦 Dynamic lighting and camera perspective.
 
-* Install dependencies: `npm install`
-* Start the compiler in watch mode and a development server: `npm start`
-* After the first compilation is finished, in your browser open: http://localhost:8080/
+---
 
-Any modification you do to the F# code will be reflected in the web page after saving.
+## Installation 🚀
 
-> Note: check the "scripts" section in `package.json` to see the commands triggered by the steps above.
+### Prerequisites
 
-## Bundling for release
+Ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (with `npm`)
+- [.NET SDK](https://dotnet.microsoft.com/) (6.0 or later)
 
-Run the following command to compile and bundle up all your F# code into one Javascript file: `npm run build`. The compiled output ends up in the `public` folder under the name `bundle.js`.
+### Clone the Repository:
 
-## Project structure
+```bash
+git clone https://github.com/your-username/Fable-3d-dice-roller.git
+cd Fable-3d-dice-roller
+```
 
-### npm
+### Install Dependencies:
 
-JS dependencies are declared in `package.json`, while `package-lock.json` is a lock file automatically generated.
+```bash
+npm install
+```
 
-### Webpack
+### Run the Development Server:
 
-[Webpack](https://webpack.js.org) is a JS bundler with extensions, like a static dev server that enables hot reloading on code changes. Configuration for Webpack is defined in the `webpack.config.js` file. Note this sample only includes basic Webpack configuration for development mode, if you want to see a more comprehensive configuration check the [Fable webpack-config-template](https://github.com/fable-compiler/webpack-config-template/blob/master/webpack.config.js).
+```bash
+npm start
+```
 
-### F#
+Open your browser and navigate to http://localhost:8080/ to see the app in action.
 
-The sample only contains two F# files: the project (.fsproj) and a source file (.fs) in the `src` folder.
+## Usage 🛠️
+Click the Roll Dice button to roll the dice.
+The die will spin randomly and land on a face that matches the rolled number.
+The result of the roll is displayed on the screen.
+Project Structure 📂
 
-### Web assets
+````
+Fable-3d-dice-roller/
+│
+├── public/
+│   ├── index.html     # Entry point for the app
+│   └── styles.css     # Optional: Custom styles
+|   └── textures/      # Dice face textures (face1.png, face2.png, ...)
+│
+├── src/
+│   ├── App.fs         # Main F# code for the app
+│   ├── App.fsproj     # Fable project configuration
+│   
+│
+├── package.json       # NPM configuration
+├── webpack.config.js  # Webpack configuration
+└── README.md          # Project documentation (you are here!)
+````
 
-The `index.html` file and other assets like an icon can be found in the `public` folder.
+## Technologies Used 🧰
+
+Fable: F# to JavaScript compiler.
+Three.js: 3D rendering library.
+Webpack: Module bundler for modern JavaScript applications.
+
+## How It Works 🔍
+
+Dice Textures: Each face of the dice is represented by a PNG texture stored in the textures folder.
+3D Scene: The app uses Three.js to render a 3D scene, including the dice, lights, and camera.
+Roll Logic: A random number generator determines the rolled face, and the dice rotates smoothly to land on the correct face.
+Additional Notes: You will need to create your own textures for a better die since mine were wiped up in five minutes with Gimp.
+
+## Future Improvements 🚀
+
+Add more dice types (e.g., D20, D12).
+Enhance animations with physics-based rolls.
+Create multiplayer support for board games.
+
+## License 📄
+This project is open-source and available under the MIT License. Feel free to use, modify, and share it!
+
+## Acknowledgments 🙌
+
+Fable for making F# in the browser possible.
+Three.js for its powerful 3D rendering tools.
+You for rolling the dice and having fun!
+
+## Enjoy the game! 🎲✨
