@@ -58,7 +58,9 @@ let diceMaterials: obj list =
 // ====== List to keep track of all dice ======
 // ============================================
 
-let mutable diceList: obj list = []
+type DiceInfo = { Mesh: obj; mutable Value: int }
+let mutable diceList: DiceInfo list = []
+
 
 // ============================================
 // ====== Target rotations for each dice ======
@@ -81,6 +83,8 @@ let updateTargetRotations () =
             List.init (currentDiceCount - currentRotationCount) (fun _ -> (0.0, 0.0, 0.0))
         targetRotations <- targetRotations @ additionalRotations
 
+        
+
 // =======================================================
 // ====== Create a new dice and add it to the scene ======
 // =======================================================
@@ -89,30 +93,27 @@ let createDice () =
     let geometry = createNew THREE?BoxGeometry [1.0; 1.0; 1.0]
     let dice = createNew THREE?Mesh [geometry; diceMaterials |> List.toArray]
 
-    // ====== Generate random position and ensure no overlap ======
-    let rec generatePosition () =
-        let randomX = (System.Random().NextDouble() - 0.5) * 8.0 // Adjust range to avoid edge collisions
-        let randomY = (System.Random().NextDouble() - 0.5) * 8.0
+    if dice <> null then
+        let rec generatePosition () =
+            let randomX = (System.Random().NextDouble() - 0.5) * 8.0
+            let randomY = (System.Random().NextDouble() - 0.5) * 8.0
 
-        // Check for collision with existing dice
-        let collision = diceList |> List.exists (fun existingDice ->
-            let existingX = unbox<float> (existingDice?position?x) // Explicitly cast to float
-            let existingY = unbox<float> (existingDice?position?y) // Explicitly cast to float
-            let distance = System.Math.Sqrt((randomX - existingX) ** 2.0 + (randomY - existingY) ** 2.0)
-            distance < 1.5 // Minimum distance to avoid overlap
-        )
+            let collision = diceList |> List.exists (fun existingDice ->
+                let existingX = unbox<float> (existingDice.Mesh?position?x)
+                let existingY = unbox<float> (existingDice.Mesh?position?y)
+                let distance = System.Math.Sqrt((randomX - existingX) ** 2.0 + (randomY - existingY) ** 2.0)
+                distance < 1.5
+            )
 
-        if collision then generatePosition () else (randomX, randomY)
+            if collision then generatePosition () else (randomX, randomY)
 
-    let (randomX, randomY) = generatePosition ()
-    dice?position?set(randomX, randomY, 0.0)
+        let (randomX, randomY) = generatePosition ()
+        dice?position?set(randomX, randomY, 0.0)
 
-    // ====== Add the dice to the scene and list ======
-    scene?add(dice)
-    diceList <- dice :: diceList // Add the dice to the list
-
-    // ====== Update targetRotations for the new dice ======
-    updateTargetRotations ()
+        // Add the new dice to the list and the scene
+        scene?add(dice)
+        diceList <- { Mesh = dice; Value = 0 } :: diceList
+        updateTargetRotations ()
 
 
 // ==============================
@@ -141,35 +142,62 @@ let faceRotations: (float * float * float) list =
       (0.0, 0.0, 0.0)                   // { Face 5 }
       (System.Math.PI, 0.0, 0.0) ]      // { Face 6 }
 
-// ================================
-// ====== Add result display ======
-// ================================
+// ==========================================
+// ====== Determine Visible Face of Dice ====
+// ==========================================
 
-let resultDisplay: Browser.Types.HTMLElement = 
-    unbox (document.createElement("div"))
+let getVisibleFace (dice: obj) =
+    // Use tolerance to manage float rounding issues
+    let tolerance = 0.1
 
-resultDisplay?style?position <- "absolute"
-resultDisplay?style?bottom <- "60px"
-resultDisplay?style?left <- "50%"
-resultDisplay?style?transform <- "translateX(-50%)"
-resultDisplay?style?fontSize <- "24px"
-resultDisplay?style?color <- "#333"
-document.body.appendChild(resultDisplay) |> ignore
+    let xRot = unbox<float> dice?rotation?x % (2.0 * System.Math.PI)
+    let yRot = unbox<float> dice?rotation?y % (2.0 * System.Math.PI)
+
+    // Compare rotations with faceRotations
+    faceRotations
+    |> List.mapi (fun i (rx, ry, _) ->
+        let isVisible =
+            System.Math.Abs(xRot - rx) < tolerance && System.Math.Abs(yRot - ry) < tolerance
+        if isVisible then Some(i + 1) else None
+    )
+    |> List.choose id
+    |> List.tryHead
+    |> Option.defaultValue 0
+
+// ==========================================
+// ========= Count Total Face Value =========
+// ==========================================
+
+let countTotal () =
+    let total = diceList |> List.sumBy (fun dice -> dice.Value)
+    totalDisplay.textContent <- $"Total: {total}"
+
+
+
+
 
 // ================================
-// ====== Simulate dice roll ======
+// ====== Simulate Dice Roll ======
 // ================================
 
 let rollDice () =
-    updateTargetRotations () // { Ensure targetRotations matches diceList }
-    targetRotations <- diceList |> List.map (fun _ ->
+    updateTargetRotations () 
+
+    // Update dice rotations and track face values
+    targetRotations <- diceList |> List.mapi (fun i diceInfo ->
         let result = System.Random().Next(1, 7)
         let (x, y, z) = faceRotations.[result - 1]
-        let extraSpin = 2.0 * System.Math.PI * (float (System.Random().Next(1, 3)))
-        (x + extraSpin, y + extraSpin, z)
+
+        // Reset rotation visually
+        diceInfo.Mesh?rotation?set(0.0, 0.0, 0.0)
+        diceInfo.Value <- result
+
+        (x + System.Math.PI * 2.0, y + System.Math.PI * 2.0, z)
     )
 
     resultDisplay.textContent <- $"Rolling {List.length diceList} dice!"
+    window.setTimeout(fun _ -> countTotal (), 2000) |> ignore
+
 
 // ============================
 // ====== Animation loop ======
@@ -178,56 +206,110 @@ let rollDice () =
 let rec animate () =
     window.requestAnimationFrame(fun _ -> animate())
 
-    // ====== Ensure targetRotations is always synchronized ======
+    // Synchronize target rotations
     updateTargetRotations ()
 
-    List.iteri (fun i dice ->
-        let (targetX, targetY, targetZ) = targetRotations.[i]
-        dice?rotation?x <- dice?rotation?x + (targetX - dice?rotation?x) * 0.1
-        dice?rotation?y <- dice?rotation?y + (targetY - dice?rotation?y) * 0.1
-        dice?rotation?z <- dice?rotation?z + (targetZ - dice?rotation?z) * 0.1
+    List.iteri (fun i diceInfo ->
+        if diceInfo.Mesh <> null then
+            let (targetX, targetY, targetZ) = targetRotations.[i]
+            
+            // Smoothly rotate the dice toward the target angles
+            diceInfo.Mesh?rotation?x <- diceInfo.Mesh?rotation?x + (targetX - diceInfo.Mesh?rotation?x) * 0.1
+            diceInfo.Mesh?rotation?y <- diceInfo.Mesh?rotation?y + (targetY - diceInfo.Mesh?rotation?y) * 0.1
+            diceInfo.Mesh?rotation?z <- diceInfo.Mesh?rotation?z + (targetZ - diceInfo.Mesh?rotation?z) * 0.1
     ) diceList
+    
     renderer?render(scene, camera) |> ignore
+
 
 animate ()
 
+let ensureElementById (id: string) =
+    match document.getElementById(id) with
+    | null ->
+        let element: Browser.Types.HTMLElement = unbox (document.createElement("div"))
+        element?id <- id
+        document.body.appendChild(element) |> ignore
+        element
+    | existingElement -> unbox<Browser.Types.HTMLElement> existingElement
+
+// ==================================
+// ====== Create Display Element ======
+// ==================================
+
+let createDisplayElement (id: string) (bottomOffset: string) =
+    let element = ensureElementById id
+    element?style?position <- "absolute"
+    element?style?bottom <- bottomOffset
+    element?style?left <- "50%"
+    element?style?transform <- "translateX(-50%)"
+    element?style?fontSize <- "24px"
+    element?style?color <- "#333"
+    element?style?padding <- "10px"
+    element?style?backgroundColor <- "#f9f9f9"
+    element?style?borderRadius <- "8px"
+    element?style?boxShadow <- "0px 4px 6px rgba(0, 0, 0, 0.1)"
+    element
+
 // =============================
-// ====== Add roll button ======
+// ===== Create DOM Displays =====
+// =============================
+let resultDisplay = createDisplayElement "result-display" "60px"
+let totalDisplay = createDisplayElement "total-display" "100px"
+
+
+// ==================================
+// ====== Button Styling Helper ======
+// ==================================
+
+let styleButton (button: Browser.Types.HTMLElement) text (color: string) left =
+    button.textContent <- text
+    button?style?position <- "absolute"
+    button?style?top <- "20px"
+    button?style?left <- left
+    button?style?padding <- "12px 24px"
+    button?style?background <- $"linear-gradient(150deg, {color}, #cea800)"
+    button?style?color <- "black"
+    button?style?border <- "none"
+    button?style?borderRadius <- "8px"
+    button?style?cursor <- "pointer"
+    button?style?boxShadow <- "0px 4px 6px rgba(0, 0, 0, 0.1)"
+
+
+    // Add hover effect
+    button?addEventListener("mouseenter", fun _ ->
+        button?style?transform <- "scale(1.1)"
+    )
+
+    button?addEventListener("mouseleave", fun _ ->
+        button?style?transform <- "scale(1)"
+    )
+
+    button?addEventListener("mousedown", fun _ ->
+        button?style?transform <- "scale(0.95)"
+        button?style?boxShadow <- "0px 2px 4px rgba(0, 0, 0, 0.2)"
+    )
+
+    button?addEventListener("mouseup", fun _ ->
+        button?style?transform <- "scale(1)"
+        button?style?boxShadow <- "0px 4px 6px rgba(0, 0, 0, 0.2)"
+    )
+
+// =============================
+// ===== Create Buttons ========
 // =============================
 
 let rollButton = document.createElement("button")
-rollButton.textContent <- "Roll Dice"
-rollButton?style?position <- "absolute"
-rollButton?style?top <- "20px"
-rollButton?style?left <- "20px" // { Align to the top-left corner }
-rollButton?style?padding <- "10px 20px" // Add some padding for better appearance
-rollButton?style?backgroundColor <- "#4CAF50" // Green color
-rollButton?style?color <- "white" // White text
-rollButton?style?border <- "none" // No border
-rollButton?style?borderRadius <- "5px" // Rounded corners
-rollButton?style?cursor <- "pointer" // Change cursor on hover
-rollButton?style?boxShadow <- "0px 4px 6px rgba(0, 0, 0, 0.1)" // Add subtle shadow
-rollButton.onclick <- fun _ -> rollDice ()
-document.body.appendChild(rollButton) |> ignore
-
-
-// ==================================
-// ===== Add "Add Dice" button ======
-// ==================================
-
 let addDiceButton = document.createElement("button")
-addDiceButton.textContent <- "Add Dice"
-addDiceButton?style?position <- "absolute"
-addDiceButton?style?top <- "20px"
-addDiceButton?style?left <- "120px" 
-addDiceButton?style?padding <- "10px 20px"
-addDiceButton?style?backgroundColor <- "#007BFF" // Blue color
-addDiceButton?style?color <- "white"
-addDiceButton?style?border <- "none"
-addDiceButton?style?borderRadius <- "5px"
-addDiceButton?style?cursor <- "pointer"
-addDiceButton?style?boxShadow <- "0px 4px 6px rgba(0, 0, 0, 0.1)"
+
+// Apply button styles
+styleButton rollButton "Roll Dice" "#c0c0c0" "20px"
+styleButton addDiceButton "Add Dice" "#B08d57" "140px"
+
+// Assign button actions
+rollButton.onclick <- fun _ -> rollDice ()
 addDiceButton.onclick <- fun _ -> createDice ()
+
+// Attach buttons to the DOM
+document.body.appendChild(rollButton) |> ignore
 document.body.appendChild(addDiceButton) |> ignore
-
-
