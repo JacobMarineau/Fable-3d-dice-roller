@@ -114,6 +114,7 @@ let createDice () =
         scene?add(dice)
         diceList <- { Mesh = dice; Value = 0 } :: diceList
         updateTargetRotations ()
+        
 
 
 // ==============================
@@ -172,10 +173,6 @@ let countTotal () =
     let total = diceList |> List.sumBy (fun dice -> dice.Value)
     totalDisplay.textContent <- $"Total: {total}"
 
-
-
-
-
 // ================================
 // ====== Simulate Dice Roll ======
 // ================================
@@ -197,7 +194,6 @@ let rollDice () =
 
     resultDisplay.textContent <- $"Rolling {List.length diceList} dice!"
     window.setTimeout(fun _ -> countTotal (), 2000) |> ignore
-
 
 // ============================
 // ====== Animation loop ======
@@ -236,7 +232,6 @@ let ensureElementById (id: string) =
 // ==================================
 // ====== Create Display Element ======
 // ==================================
-
 let createDisplayElement (id: string) (bottomOffset: string) =
     let element = ensureElementById id
     element?style?position <- "absolute"
@@ -251,12 +246,37 @@ let createDisplayElement (id: string) (bottomOffset: string) =
     element?style?boxShadow <- "0px 4px 6px rgba(0, 0, 0, 0.1)"
     element
 
-// =============================
-// ===== Create DOM Displays =====
-// =============================
+// Initialize DOM Elements Early
 let resultDisplay = createDisplayElement "result-display" "60px"
 let totalDisplay = createDisplayElement "total-display" "100px"
+let diceCounterDisplay = createDisplayElement "dice-counter" "140px"
 
+// Attach UI elements to DOM before anything runs
+document.body.appendChild(resultDisplay) |> ignore
+document.body.appendChild(totalDisplay) |> ignore
+document.body.appendChild(diceCounterDisplay) |> ignore
+
+// ==========================================
+// ===== Update Dice Counter Display =======
+// ==========================================
+let updateDiceCounter () =
+    if diceCounterDisplay <> null then
+        // Clear current content
+        diceCounterDisplay.innerHTML <- ""
+
+        // Create visual dice icons
+        diceList
+        |> List.iter (fun _ ->
+            let dieIcon = document.createElement("div")
+            dieIcon?style?width <- "24px"
+            dieIcon?style?height <- "24px"
+            dieIcon?style?margin <- "5px"
+            dieIcon?style?display <- "inline-block"
+            dieIcon?style?backgroundColor <- "#B08D57"
+            dieIcon?style?borderRadius <- "50%"
+            dieIcon?style?boxShadow <- "0px 4px 6px rgba(0, 0, 0, 0.2)"
+            diceCounterDisplay.appendChild(dieIcon) |> ignore
+        )
 
 // ==================================
 // ====== Button Styling Helper ======
